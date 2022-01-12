@@ -1,3 +1,10 @@
+/*
+	- Jonathan Salisbury Vega
+	- Joan Sanso Pericas
+	Video: https://youtu.be/s-hPI3O7UxY
+
+*/
+
 package main
 
 import (
@@ -57,18 +64,6 @@ func main() {
 	)
 	failOnError(e, "Failed to set QoS")
 
-	//Consumició dels missatges: consumim de la coa de permisos
-	missatges, e := canal.Consume(
-		perms.Name,
-		"",
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-	failOnError(e, "Error a l'intentar registrar un consumidor.")
-
 	//Declaram l'Exchange pel qual l'os enviarà el missatge d'acabar a les abelles
 	//que es de tipus fanout
 	e = canal.ExchangeDeclare(
@@ -101,6 +96,19 @@ func main() {
 		false,
 		nil)
 	failOnError(e, "Error a l'enllaçar la coa")
+
+	//Consumició dels missatges: consumim de la coa de permisos
+	missatges, e := canal.Consume(
+		perms.Name,
+		"",
+		false,
+		false,
+		false,
+		false,
+		nil,
+	)
+	failOnError(e, "Error a l'intentar registrar un consumidor.")
+
 	//Consumim de la coa local que contendrà el missatge de acabament.
 	msgFinal, e := canal.Consume(
 		local.Name,
@@ -113,6 +121,7 @@ func main() {
 	)
 
 	nomAbella := os.Args[1] //Agafam el nom de l'abella dels arguments de consola
+
 	forever := make(chan bool)
 	//Aquesta gorutina s'encarregarà de llegir els missatges de la coa de permisos, i publicarà, en cas de ser la abella número 10,
 	// un missatge a la coa dels avisos per avisar a l'os de que el pot ja està ple.

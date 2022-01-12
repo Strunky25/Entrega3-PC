@@ -1,3 +1,10 @@
+/*
+	- Jonathan Salisbury Vega
+	- Joan Sanso Pericas
+	Video: https://youtu.be/s-hPI3O7UxY
+
+*/
+
 package main
 
 import (
@@ -28,7 +35,7 @@ func main() {
 	failOnError(e, "Error a l'obrir un canal.")
 	defer canal.Close()
 
-	//Declaram la coa a través l'os rebrà el missatge per despertarse
+	//Declaram la coa a través de la cual l'os rebrà el missatge per despertarse
 	coaAvisos, e := canal.QueueDeclare(
 		"avisos", // name
 		true,     // durable
@@ -39,11 +46,21 @@ func main() {
 	)
 	failOnError(e, "Error al declarar la coa dels avisos.")
 
+	//Declaram el canal de permisos (on l'os posarà els permisos per a que les abelles puguin produïr)
+	coaPerms, e := canal.QueueDeclare(
+		"permisos",
+		true,
+		false,
+		false,
+		false,
+		nil)
+	failOnError(e, "Error al declarar el canal de permisos.")
+
 	//Declaram l'exchange on l'os enviarà el missatge de finalitzar a les
 	// abelles.
 	e = canal.ExchangeDeclare(
 		"final",
-		"fanout",
+		"fanout", // <- tipo fanout
 		true,
 		false,
 		false,
@@ -57,7 +74,7 @@ func main() {
 		false)
 	failOnError(e, "Failed to set QoS")
 
-	//Consumició dels missatges: consumim de la coa d'avisos, que contendrà els avisos per despertar a l'os
+	//Consumició dels missatges: l'os consumeix de la coa d'avisos, que contendrà els avisos per despertar a l'os
 	missatges, e := canal.Consume(
 		coaAvisos.Name,
 		"",
@@ -68,22 +85,13 @@ func main() {
 		nil)
 	failOnError(e, "No s'ha pogut registrar el Consumer")
 
-	//Declaram el canal de permisos (on l'os posarà els permisos per a que les abelles puguin produïr)
-	perms, e := canal.QueueDeclare(
-		"permisos",
-		true,
-		false,
-		false,
-		false,
-		nil)
-	failOnError(e, "Error al declarar el canal de permisos.")
 	//Posam els 10 permisos inicials per a les abelles
 	for i := 1; i <= 10; i++ {
 		permis := strconv.Itoa(i)
 		//Publicam, on el cos de la publicació és el nombre del permís
 		e := canal.Publish(
 			"",
-			perms.Name,
+			coaPerms.Name,
 			false,
 			false,
 			amqp.Publishing{
@@ -94,10 +102,10 @@ func main() {
 		failOnError(e, "No s'ha publicat un permís.")
 		//log.Printf("Enviat %s", permis)
 	}
-
 	log.Printf("L'os s'envà a dormir.")
-	time.Sleep(time.Duration(1+rand.Float64()*3) * time.Second)
+
 	forever := make(chan bool)
+
 	//El nombre de pics que l'ós ha menjat del pot
 	picsMenjat := 0
 	//Aquesta gorutina s'encarrega de llegir els missatges d'avís, i quan ja ha menjat tres pics, envia el missatge d'acabament a les abelles i l'os acaba.
@@ -127,7 +135,7 @@ func main() {
 					permis := strconv.Itoa(i)
 					e := canal.Publish(
 						"",
-						perms.Name,
+						coaPerms.Name,
 						false,
 						false,
 						amqp.Publishing{
@@ -140,7 +148,6 @@ func main() {
 				}
 				msg.Ack(false)
 				log.Printf("L'os s'envà a dormir.")
-				time.Sleep(time.Duration(1+rand.Float64()*3) * time.Second)
 			}
 		}
 	}()
