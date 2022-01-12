@@ -105,7 +105,7 @@ func main() {
 		nil,
 	)
 
-	nomAbella := os.Args[0]
+	nomAbella := os.Args[1]
 	forever := make(chan bool)
 	go func() {
 		for missatge := range missatges {
@@ -128,7 +128,7 @@ func main() {
 					failOnError(e, "Error a l'enviar a l'os el missatge de despertar.")
 					log.Printf("Som l'abella %s i despert a l'os", nomAbella)
 				}
-				time.Sleep(time.Duration(1 + rand.Float64()*2))
+				time.Sleep(time.Duration(1+rand.Float64()*2) * time.Second)
 			}
 		}
 	}()
@@ -138,7 +138,7 @@ func main() {
 			if msg.RoutingKey != perms.Name {
 				msg.Ack(false)
 				log.Printf("El pot de mel s'ha romput!")
-				log.Printf("La abella %s torna al rusc.")
+				log.Printf("La abella %s torna al rusc.", nomAbella)
 				log.Printf("Simulació acabada.")
 				os.Exit(0)
 			}
