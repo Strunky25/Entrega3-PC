@@ -39,7 +39,7 @@ func main() {
 	coaAvisos, e := canal.QueueDeclare(
 		"avisos", // name
 		true,     // durable
-		false,    // delete when unused
+		true,     // delete when unused
 		false,    // exclusive
 		false,    // no-wait
 		nil,      // arguments
@@ -50,7 +50,7 @@ func main() {
 	perms, e := canal.QueueDeclare(
 		"permisos",
 		true,
-		false,
+		true,
 		false,
 		false,
 		nil,
@@ -164,7 +164,7 @@ func main() {
 				log.Printf("El pot de mel s'ha romput!")
 				log.Printf("La abella %s torna al rusc.", nomAbella)
 				log.Printf("Simulació acabada.")
-				os.Exit(0)
+				forever <- true
 			}
 		}
 	}()

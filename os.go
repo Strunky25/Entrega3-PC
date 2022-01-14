@@ -10,7 +10,6 @@ package main
 import (
 	"log"
 	"math/rand"
-	"os"
 	"strconv"
 	"time"
 
@@ -39,7 +38,7 @@ func main() {
 	coaAvisos, e := canal.QueueDeclare(
 		"avisos", // name
 		true,     // durable
-		false,    // delete when unused
+		true,     // delete when unused
 		false,    // exclusive
 		false,    // no-wait
 		nil,      // arguments
@@ -50,7 +49,7 @@ func main() {
 	coaPerms, e := canal.QueueDeclare(
 		"permisos",
 		true,
-		false,
+		true,
 		false,
 		false,
 		nil)
@@ -128,7 +127,7 @@ func main() {
 						ContentType: "text/plain",
 						Body:        []byte(finiquito)})
 				failOnError(e, "El missatge de finalització no s'ha publicat.")
-				os.Exit(0)
+				forever <- true
 			} else {
 				//Si no és el 3r pic, posa 10 missatges més dins la coa
 				for i := 1; i <= 10; i++ {
